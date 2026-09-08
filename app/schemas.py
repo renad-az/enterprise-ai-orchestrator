@@ -1,5 +1,7 @@
+from datetime import datetime
 from decimal import Decimal
 from enum import Enum
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -9,6 +11,14 @@ class Currency(str, Enum):
     USD = "USD"
 
 
+class RequestStatus(str, Enum):
+    RECEIVED = "RECEIVED"
+    NEEDS_INFORMATION = "NEEDS_INFORMATION"
+    PENDING_APPROVAL = "PENDING_APPROVAL"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+
+
 class RequestCreate(BaseModel):
     requester_name: str = Field(min_length=2, max_length=100)
     department: str = Field(min_length=2, max_length=100)
@@ -16,3 +26,11 @@ class RequestCreate(BaseModel):
     description: str = Field(min_length=20, max_length=2000)
     estimated_value: Decimal = Field(gt=0)
     currency: Currency = Currency.SAR
+
+
+class RequestResponse(BaseModel):
+    request_id: UUID
+    message: str
+    status: RequestStatus
+    created_at: datetime
+    request: RequestCreate
