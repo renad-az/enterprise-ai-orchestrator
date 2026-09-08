@@ -1,36 +1,43 @@
-from datetime import datetime
-from decimal import Decimal
-from enum import Enum
-from uuid import UUID
+from datetime import datetime, timezone
+from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from fastapi import FastAPI
 
-
-class Currency(str, Enum):
-    SAR = "SAR"
-    USD = "USD"
+from app.schemas import RequestCreate, RequestResponse, RequestStatus
 
 
-class RequestStatus(str, Enum):
-    RECEIVED = "RECEIVED"
-    NEEDS_INFORMATION = "NEEDS_INFORMATION"
-    PENDING_APPROVAL = "PENDING_APPROVAL"
-    APPROVED = "APPROVED"
-    REJECTED = "REJECTED"
+app = FastAPI(
+    title="Enterprise AI Request & Approval Orchestrator",
+    version="0.1.0",
+)
 
 
-class RequestCreate(BaseModel):
-    requester_name: str = Field(min_length=2, max_length=100)
-    department: str = Field(min_length=2, max_length=100)
-    title: str = Field(min_length=5, max_length=150)
-    description: str = Field(min_length=20, max_length=2000)
-    estimated_value: Decimal = Field(gt=0)
-    currency: Currency = Currency.SAR
+@app.get("/")
+def root():
+    return {
+        "message": "Enterprise AI Orchestrator API",
+        "status": "running",
+    }
 
 
-class RequestResponse(BaseModel):
-    request_id: UUID
-    message: str
-    status: RequestStatus
-    created_at: datetime
-    request: RequestCreate
+@app.get("/health")
+def health_check():
+    return {
+        "status": "healthy",
+        "version": "0.1.0",
+    }
+
+
+@app.post(
+    "/requests",
+    response_model=RequestResponse,
+    status_code=201,
+)
+def create_request(request: RequestCreate):
+    return RequestResponse(
+        request_id=uuid4(),
+        message="Request received successfully",
+        status=RequestStatus.RECEIVED,
+        created_at=datetime.now(timezone.utc),
+        request=request,
+    )
