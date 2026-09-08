@@ -1,34 +1,36 @@
-from fastapi import FastAPI
+from datetime import datetime
+from decimal import Decimal
+from enum import Enum
+from uuid import UUID
 
-from app.schemas import RequestCreate
-
-
-app = FastAPI(
-    title="Enterprise AI Request & Approval Orchestrator",
-    version="0.1.0",
-)
+from pydantic import BaseModel, Field
 
 
-@app.get("/")
-def root():
-    return {
-        "message": "Enterprise AI Orchestrator API",
-        "status": "running",
-    }
+class Currency(str, Enum):
+    SAR = "SAR"
+    USD = "USD"
 
 
-@app.get("/health")
-def health_check():
-    return {
-        "status": "healthy",
-        "version": "0.1.0",
-    }
+class RequestStatus(str, Enum):
+    RECEIVED = "RECEIVED"
+    NEEDS_INFORMATION = "NEEDS_INFORMATION"
+    PENDING_APPROVAL = "PENDING_APPROVAL"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
 
 
-@app.post("/requests", status_code=201)
-def create_request(request: RequestCreate):
-    return {
-        "message": "Request received successfully",
-        "status": "RECEIVED",
-        "request": request,
-    }
+class RequestCreate(BaseModel):
+    requester_name: str = Field(min_length=2, max_length=100)
+    department: str = Field(min_length=2, max_length=100)
+    title: str = Field(min_length=5, max_length=150)
+    description: str = Field(min_length=20, max_length=2000)
+    estimated_value: Decimal = Field(gt=0)
+    currency: Currency = Currency.SAR
+
+
+class RequestResponse(BaseModel):
+    request_id: UUID
+    message: str
+    status: RequestStatus
+    created_at: datetime
+    request: RequestCreate
